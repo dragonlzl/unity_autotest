@@ -1,5 +1,7 @@
 airtest + unittest + HTMLTestEunner
 
+报告可截图和记录跳过的用例
+
 改动过代码的模块：HTMLTestEunner unittest
 具体参考链接：
 https://blog.csdn.net/envony/article/details/73460120
