@@ -475,6 +475,7 @@ a.popup_link:hover {
     <td>%(error)s</td>
     <td>%(skip)s</td>
     <td><a href="javascript:showClassDetail('%(cid)s',%(count)s)">Detail</a></td>
+    <td></td>
 </tr>
 """ # variables: (style, desc, count, Pass, fail, error, cid)
 
@@ -824,9 +825,9 @@ class HTMLTestRunner(Template_mixin):
         if (uo and ue):
             hidde_status = ''
             unum = str(uo).find('bug_image:')
-            print('uo1:', unum)
-            print('uo2:', str(uo))
-            image_url = '../bug_image/' + str(uo)[unum + 11:unum + 45].replace(' ', '')
+            # print('uo1:', unum)
+            # print('uo2:', str(uo))
+            image_url = '../bug_image/' + str(uo)[unum + 11:unum + 48].replace(' ', '')
             print('image_url:', image_url)
         else:
             hidde_status = '''hidden="hidden"'''
