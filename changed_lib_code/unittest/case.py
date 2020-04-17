@@ -14,7 +14,7 @@ import traceback
 from . import result
 from .util import (strclass, safe_repr, _count_diff_all_purpose,
                    _count_diff_hashable, _common_shorten_repr)
-from AutoTest import *
+from airtest.core.api import *
 
 __unittest = True
 
