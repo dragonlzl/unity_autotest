@@ -1,108 +1,64 @@
-from airtest.core.api import *
-from airtest.core.android.android import *
-import threading
+from usb_install import *
+from info import *
+import ParamTestCase
 import unittest
-import time
-import getimagepath
-import HTMLTestRunner
-
-
-button = getimagepath.png_dict()
-page_name = 'com.ChillyRoom.DungeonShooter'
-apk_name = 'TapTap-2.6.1.apk'
-oppo_info = {'pw': ''}
-user_info = {'account':  '', 'pw': ''}
 
 current_path = os.getcwd()
 report_path = os.path.join(current_path, "report")
-now = now
+
+# page_name = info.page_name
+# page_name = akp_info['tap']['page_name']
+# apk_name = akp_info['tap']['apk_name']
+# apk_info = akp_info['tap']
+# userinfo = user_info['account1']
 
 
-# 装包用的线程
-class usb_install_thread(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
+class dungeonTest(ParamTestCase.ParametrizedTestCase):
 
-    def run(self):  # 把要执行的代码写到run函数里面 线程在创建后会直接运行run函数
-        usb_install()
+    # self.param -> list  [device, account, apk, phone]
+    def init(self):
+        print(self.param)
+        device = self.param[0]
+        account = self.param[1]
+        target = self.param[2]
+        phone = self.param[3]
 
+        dungeonTest.userinfo = user_info[account]
+        dungeonTest.apk_info = akp_info[target]
+        # 正式使用时才启用
+        # dungeonTest.phoneinfo = target
 
-def usb_install():
-    try:
-        sleep(5)
-        if exists(Template(button['install']['pw_btn'])):
-            touch(Template(button['install']['pw_btn']))
-            sleep(1)
-            text(oppo_info['pw'])
-            sleep(2)
-            # touch(Template("image/install/button_image/install.png"))
-            touch(Template(button['install']['install']))
-            sleep(3)
+        # 测试时才启用
+        dungeonTest.phone = phone
+        dungeonTest.phoneinfo = phone_info[phone]
 
-        if exists(Template(button['install']['c_install'])):
-            sleep(2)
-            touch(Template(button['install']['c_install']))
-            sleep(2)
-
-        assert_exists(Template(button['install']['app_install']))
-        # assert_exists(Template(button['install']['app_install']), filename=str(int(time.time())))
-        # assertManager.assertPage(assert_exists(Template(button['install']['app_install']), filename=str(int(time.time()))))
-
-        touch(Template(button['install']['app_install']))
-
-        sleep(3)
-    except Exception as e:
-        screenhot()
-        print('install err: ', e)
-        raise Exception
-
-
-def screenhot():
-    path = os.getcwd()
-    dir = os.path.join(path, 'bug_image', now)
-    isExists = os.path.exists(dir)
-    if not isExists:
-        os.makedirs(dir)
-        print(dir)
-    snapshot(os.path.join(dir, str(int(time.time())) + '.png'))
-
-# 选择设备
-def devices_choice(i=0):
-    # 获得当前设备列表
-    adb = ADB()
-    devicesList = adb.devices()
-    if len(devicesList) >= 2:
-
-        # 连接手机 默认连接方式
-        connect_device("android:///")
-
-        # 指定设备号连接
-        connect_device("android:///" + devicesList[i][0])
-
-
-class dungeonTest(unittest.TestCase):
+        connect(device)
 
     @classmethod
     def setUpClass(cls):
-        devices_choice(1)
-        init_device("Android")
-        thread1 = usb_install_thread()
-        thread1.start()
-        install(apk_name)
-        start_app(page_name)
+        # cls().init()
+        pass
 
     @classmethod
     def tearDownClass(cls):
-        stop_app(page_name)
-        uninstall(page_name)
+        stop_app(dungeonTest.apk_info['pakge_name'])
+        uninstall(dungeonTest.apk_info['pakge_name'])
 
-    def test01_login1(self):
-        raise AssertionError
+    @screenshot
+    def test01_appinstall(self):
+        self.init()
+        init_device("Android")
+        # 如果是oppo才执行这个oppo安装
+        if dungeonTest.phone == 'oppo':
+            thread1 = usb_install_thread()
+            thread1.start()
+        install(dungeonTest.apk_info['apk_name'])
+        start_app(dungeonTest.apk_info['pakge_name'])
 
+    # @screenshot
     @unittest.Myskip
     def test02_login(self):
         # 断言弹出隐私协议弹窗，在断言的api中加入了截图功能
-        # assert_exists(Template(button['firsttimeinstall']['title']), filename=str(int(time.time())))
         assert_exists(Template(button['firsttimeinstall']['title']))
 
         # 点击隐私协议的同意
@@ -113,103 +69,98 @@ class dungeonTest(unittest.TestCase):
 
         # 断言弹出实名奖励（此手机已经进行过实名）
 
-        # assert_exists(Template(button['realname']['link_close']), filename=str(int(time.time())))
-
-        # # 关闭弹出来的链接
-        # touch(Template(button['realname']['link_close']))
-
         # 如果有链接关闭弹出来的链接
         if exists(Template(button['realname']['link_close'])):
             touch(Template(button['realname']['link_close']))
 
         # 依次点击断言下一个奖励
         touch(Template(button['realname']['awark1']))
-        # assert_exists(Template(button['realname']['awark2']), filename=str(int(time.time())))
         assert_exists(Template(button['realname']['awark2']))
 
         touch(Template(button['realname']['awark2']))
         assert_exists(Template(button['realname']['awark3']))
-        # assert_exists(Template(button['realname']['awark3']), filename=str(int(time.time())))
-        # creathtml('aaaa', 'bbbb')
-        # debug
-        # assert_exists(Template(button['realname']['awark2']), filename=str(int(time.time())))
-        assert_exists(Template(button['realname']['awark1']))
+        # assert_exists(Template(button['realname']['awark1']))
 
         touch(Template(button['realname']['awark3']))
 
         # 断言是否弹出用户须知界面
         assert_exists(Template(button['userinstructionspage']['title']))
-        # assert_exists(Template(button['userinstructionspage']['title']),
-        #               filename=str(int(time.time())))
+
+        # debug
+        # assert_exists(Template(button['firsttimeinstall']['title']))
 
         # 等待5秒并点击同意按钮
         sleep(5)
         touch(Template(button['userinstructionspage']['OK_bt']))
 
         # 断言是否弹出登陆弹窗
-        # assert_exists(Template(button['loginpage']['pw_bt']), filename=str(int(time.time())))
         assert_exists(Template(button['loginpage']['pw_bt']))
 
         # 输入账号密码
         touch(Template(button['loginpage']['account_bt']))
-        text(user_info['account'])
+        text(dungeonTest.userinfo['account'])
         sleep(1)
         touch(Template(button['loginpage']['title']))
 
         touch(Template(button['loginpage']['pw_bt']))
-        text(user_info['pw'])
+        text(dungeonTest.userinfo['pw'])
         touch(Template(button['loginpage']['title']))
         sleep(1)
 
         touch(Template(button['loginpage']['login_bt']))
 
         # 断言登陆成功看到海豹宝宝并点击
-        # assert_exists(Template(button['cloudsavepage']['haibao']), filename=str(int(time.time())))
         assert_exists(Template(button['cloudsavepage']['haibao']))
         touch(Template(button['cloudsavepage']['haibao']))
-        # assert_exists(Template(button['cloudsavepage']['upload_bt']),
-        #               filename=str(int(time.time())))
-        # assert_exists(Template(button['cloudsavepage']['download_bt']),
-        #               filename=str(int(time.time())))
+
         assert_exists(Template(button['cloudsavepage']['upload_bt']))
         assert_exists(Template(button['cloudsavepage']['download_bt']))
         # 断言登陆成功看到上传下载按钮
 
-        sleep(10)
+    # @screenshot
+    @unittest.Myskip
+    def test03_infocheck(self):
 
-    def test03_test(self):
-        print(123456)
+        touch(Template(button['cloudsavepage']['info_bt']))
 
+        assert_exists(Template(button['accountinfopage']['logout_bt']))
+
+        assert_exists(Template(button['accountinfopage']['accounttarget']))
+
+        touch(Template(button['accountinfopage']['close_bt']))
+
+    # @screenshot
     @unittest.Myskip
     def test04_test(self):
         print(654321)
 
-def creathtml(path, pic):
-    html = ''
-    if len(path) > 0:
-        for i in range(len(path)):
-            if i == 0:
-                html = '<a href=' + path[i] + ' target="_blank">' + pic[i] + '</a>'
-            else:
-                html = html + '<br /><a href=' + path[i] + ' target="_blank">' + pic[i] + '</a>'
-    else:
-        html = ''
-    htmls = 'htmlbegin<td>' + html +'</td>htmlend'
-    return htmls
 
 if __name__ == '__main__':
 
     # unittest.main()
 
-    # 使用testloader
-    TestSuite = unittest.TestSuite()
-    TestLoad = unittest.TestLoader()
-    TestLoad.loadTestsFromTestCase(dungeonTest)
-    TestSuite.addTest(TestLoad.loadTestsFromTestCase(dungeonTest))
-    print(TestLoad.loadTestsFromTestCase(dungeonTest))
-    print(TestLoad.getTestCaseNames(dungeonTest))
+    testsuite = unittest.TestSuite()
+    # testsuite.addTest(dungeonTest("test01_appinstall"))
+    device = devices_info['oppo_A5']
+    account = 'account1'
+    apk = 'tap'
+    phone = 'oppo'
+
+    param1 = [device, account, apk, phone]
+
+    testsuite.addTest(ParamTestCase.ParametrizedTestCase.parametrize(dungeonTest, param=param1))
     runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(TestSuite)
+    runner.run(testsuite)
+
+    # 使用testloader
+    # TestSuite = unittest.TestSuite()
+    # TestLoad = unittest.TestLoader()
+    # TestLoad.loadTestsFromTestCase(dungeonTest)
+    # TestSuite.addTest(TestLoad.loadTestsFromTestCase(dungeonTest))
+    # print(TestLoad.loadTestsFromTestCase(dungeonTest))
+    # print(TestLoad.getTestCaseNames(dungeonTest))
+    # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(TestSuite)
 
     # result_path = os.path.join(report_path, str(int(time.time())) + "_result.html")
     #
